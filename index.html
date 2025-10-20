@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contacts</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #60a5fa;
+      --accent-2: #a78bfa;
+      --ring: rgba(96,165,250,.35);
+      --ok: #34d399;
+      --warn: #f59e0b;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 10% 10%, #0b1022 0, var(--bg) 40%), var(--bg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .wrap {
+      width: 100%;
+      max-width: 820px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 30%) no-repeat, var(--card);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: 18px;
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.03);
+      overflow: hidden;
+    }
+    header {
+      padding: 20px 22px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: clamp(18px, 2.2vw, 22px);
+      margin: 0;
+      letter-spacing: .2px;
+    }
+    header p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(96,165,250,.35);
+      transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:active { transform: translateY(1px); }
+    main { padding: 16px 16px 8px; }
+    .table-wrap {
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(2,6,23,.35);
+      backdrop-filter: blur(6px);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      text-align: left;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+      background: rgba(148,163,184,.08);
+      padding: 14px 16px;
+    }
+    tbody td {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(148,163,184,.1);
+      font-size: 15px;
+    }
+    tbody tr:hover td { background: rgba(148,163,184,.06); }
+    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    footer {
+      padding: 14px 16px 18px;
+      display: grid;
+      gap: 10px;
+    }
+    .msg {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,.15);
+      background: rgba(15,23,42,.55);
+      min-height: 22px;
+      font-size: 14px;
+    }
+    .msg.ok { border-color: rgba(52,211,153,.5); box-shadow: 0 0 0 3px rgba(52,211,153,.12) inset; }
+    .msg.warn { border-color: rgba(245,158,11,.5); box-shadow: 0 0 0 3px rgba(245,158,11,.12) inset; }
+    .msg.err { border-color: rgba(239,68,68,.5); box-shadow: 0 0 0 3px rgba(239,68,68,.12) inset; }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; }
+    @media (max-width: 520px) {
+      header { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .actions { width: 100%; justify-content: stretch; }
+      .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Contacts app">
+    <header>
+      <div>
+        <h1>📇 Contacts</h1>
+        <p>Choose a slot number (0–5) to view the contact name.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="selectBtn" type="button">Select a Contact</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="table-wrap" aria-live="polite">
+        <table aria-label="Contact slots">
+          <thead>
+            <tr>
+              <th class="mono">Slot #</th>
+              <th>Name</th>
+            </tr>
+          </thead>
+          <tbody id="contactBody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer>
+      <div id="message" class="msg" aria-live="polite"></div>
+      <div class="hint">
+        Tip: Click “Select a Contact” and enter a slot number 0–5. You’ll be asked
+        if you want to choose another after each selection.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Array to store Names (6 slots).
+    const contacts = ["Arnold", "Sly", "Dwayne", "Vin", "JCVD", "Steven"];
+
+    // Render the table contents.
+    const tbody = document.getElementById("contactBody");
+    function renderTable() {
+      tbody.innerHTML = "";
+      contacts.forEach((name, idx) => {
+        const tr = document.createElement("tr");
+        const tdIdx = document.createElement("td");
+        const tdName = document.createElement("td");
+        tdIdx.textContent = idx;
+        tdIdx.className = "mono";
+        tdName.textContent = name ?? "(empty)";
+        tr.appendChild(tdIdx);
+        tr.appendChild(tdName);
+        tbody.appendChild(tr);
+      });
+    }
+    renderTable();
+
+    const message = document.getElementById("message");
+    function showMessage(text, kind = "") {
+      message.className = "msg " + (kind ? kind : "");
+      message.textContent = text;
+    }
+
+    
+    document.getElementById("selectBtn").addEventListener("click", () => {
+      let continueSelecting = true;
+
+      while (continueSelecting) {
+        const input = prompt(
+          "Enter a slot number (0–" + (contacts.length - 1) + ") to view the name:"
+        );
+
+        // If user pressed Cancel, exiting the loop immediately.
+        if (input === null) {
+          showMessage("Selection cancelled.", "warn");
+          break;
+        }
+
+        
+        const index = Number(input.trim());
+        if (!Number.isInteger(index) || index < 0 || index >= contacts.length) {
+          const tryAgain = confirm(
+            "Name not found for slot \"" + input + "\".\nWould you like to try again?"
+          );
+          if (!tryAgain) {
+            showMessage("No valid selection made.", "err");
+            break;
+          }
+          // loop continues
+          continue;
+        }
+
+        // Use a while loop to "search" for the requested slot index
+        let i = 0;
+        let foundName = null;
+        while (i < contacts.length) {
+          if (i === index) {
+            foundName = contacts[i];
+            break;
+          }
+          i++;
+        }
+
+        if (foundName) {
+          showMessage(`You selected ${foundName}.`, "ok");
+        } else {
+          
+          showMessage("Name not found.", "err");
+        }
+
+        
+        continueSelecting = confirm("Want to select another name?");
+      }
+    });
+  </script>
+</body>
+</html>
